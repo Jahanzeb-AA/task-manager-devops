@@ -5,11 +5,9 @@ const path = require("path");
 const app = express();
 const PORT = 3000;
 
-// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Database
 const db = new sqlite3.Database("./tasks.db", (err) => {
   if (err) {
     console.error("Error opening database:", err.message);
@@ -18,7 +16,6 @@ const db = new sqlite3.Database("./tasks.db", (err) => {
   }
 });
 
-// Create table if not exists
 db.run(`
   CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,9 +24,6 @@ db.run(`
   )
 `);
 
-// Routes
-
-// Get all tasks
 app.get("/api/tasks", (req, res) => {
   db.all("SELECT * FROM tasks ORDER BY id DESC", [], (err, rows) => {
     if (err) {
@@ -39,7 +33,6 @@ app.get("/api/tasks", (req, res) => {
   });
 });
 
-// Add new task
 app.post("/api/tasks", (req, res) => {
   const { title } = req.body;
 
@@ -54,6 +47,7 @@ app.post("/api/tasks", (req, res) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
+
       res.json({
         id: this.lastID,
         title: title.trim(),
@@ -63,7 +57,6 @@ app.post("/api/tasks", (req, res) => {
   );
 });
 
-// Toggle task complete/incomplete
 app.put("/api/tasks/:id", (req, res) => {
   const { id } = req.params;
 
@@ -96,7 +89,35 @@ app.put("/api/tasks/:id", (req, res) => {
   });
 });
 
-// Delete task
+// Edit task title
+app.patch("/api/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: "Task title is required" });
+  }
+
+  db.run(
+    "UPDATE tasks SET title = ? WHERE id = ?",
+    [title.trim(), id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.json({
+        id: Number(id),
+        title: title.trim(),
+      });
+    }
+  );
+});
+
 app.delete("/api/tasks/:id", (req, res) => {
   const { id } = req.params;
 
@@ -113,7 +134,6 @@ app.delete("/api/tasks/:id", (req, res) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

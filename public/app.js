@@ -31,6 +31,33 @@ async function loadTasks() {
       loadTasks();
     };
 
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.onclick = async () => {
+      const newTitle = prompt("Edit task title:", task.title);
+
+      if (newTitle === null) {
+        return;
+      }
+
+      const trimmedTitle = newTitle.trim();
+
+      if (!trimmedTitle) {
+        alert("Task title cannot be empty.");
+        return;
+      }
+
+      await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: trimmedTitle }),
+      });
+
+      loadTasks();
+    };
+
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "delete-btn";
     deleteBtn.textContent = "Delete";
@@ -40,6 +67,7 @@ async function loadTasks() {
     };
 
     actions.appendChild(completeBtn);
+    actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
 
     li.appendChild(title);
