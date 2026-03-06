@@ -1,0 +1,16 @@
+{
+  "name": "task-manager-devops",
+  "version": "1.0.0",
+  "description": "Simple Task Management System for DevOps assignment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "sqlite3": "^5.1.7"
+  }
+}
