@@ -1,4 +1,6 @@
 const taskInput = document.getElementById("taskInput");
+const priorityInput = document.getElementById("priority");
+const dueDateInput = document.getElementById("dueDate");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 
@@ -12,13 +14,23 @@ async function loadTasks() {
     const li = document.createElement("li");
     li.className = "task-item";
 
-    const title = document.createElement("span");
+    const info = document.createElement("div");
+    info.className = "task-info";
+
+    const title = document.createElement("div");
     title.className = "task-title";
     title.textContent = task.title;
 
     if (task.completed) {
       title.classList.add("completed");
     }
+
+    const meta = document.createElement("div");
+    meta.className = "task-meta";
+    meta.textContent = `Priority: ${task.priority || "Medium"} | Due: ${task.dueDate || "None"}`;
+
+    info.appendChild(title);
+    info.appendChild(meta);
 
     const actions = document.createElement("div");
     actions.className = "task-actions";
@@ -32,27 +44,49 @@ async function loadTasks() {
     };
 
     const editBtn = document.createElement("button");
+    editBtn.className = "edit-btn";
     editBtn.textContent = "Edit";
     editBtn.onclick = async () => {
       const newTitle = prompt("Edit task title:", task.title);
-
-      if (newTitle === null) {
-        return;
-      }
+      if (newTitle === null) return;
 
       const trimmedTitle = newTitle.trim();
-
       if (!trimmedTitle) {
         alert("Task title cannot be empty.");
         return;
       }
+
+      const newPriority = prompt(
+        "Edit priority (Low, Medium, High):",
+        task.priority || "Medium"
+      );
+      if (newPriority === null) return;
+
+      const validPriorities = ["Low", "Medium", "High"];
+      const formattedPriority =
+        newPriority.charAt(0).toUpperCase() + newPriority.slice(1).toLowerCase();
+
+      if (!validPriorities.includes(formattedPriority)) {
+        alert("Priority must be Low, Medium, or High.");
+        return;
+      }
+
+      const newDueDate = prompt(
+        "Edit due date (YYYY-MM-DD) or leave empty:",
+        task.dueDate || ""
+      );
+      if (newDueDate === null) return;
 
       await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title: trimmedTitle }),
+        body: JSON.stringify({
+          title: trimmedTitle,
+          priority: formattedPriority,
+          dueDate: newDueDate.trim() || null,
+        }),
       });
 
       loadTasks();
@@ -70,7 +104,7 @@ async function loadTasks() {
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
 
-    li.appendChild(title);
+    li.appendChild(info);
     li.appendChild(actions);
 
     taskList.appendChild(li);
@@ -90,10 +124,16 @@ addTaskBtn.addEventListener("click", async () => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({
+      title,
+      priority: priorityInput.value,
+      dueDate: dueDateInput.value || null,
+    }),
   });
 
   taskInput.value = "";
+  priorityInput.value = "Medium";
+  dueDateInput.value = "";
   loadTasks();
 });
 
